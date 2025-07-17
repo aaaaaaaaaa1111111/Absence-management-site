@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>時間割フォーム</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #fefefe;
+      padding: 30px;
+      max-width: 400px;
+      margin: auto;
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background-color: #e8dff3;
+      color: #000;
+    }
+
+    label {
+      display: block;
+      margin-top: 20px;
+      margin-bottom: 5px;
+    }
+
+    select, input[readonly] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 30px;
+      width: 100%;
+      padding: 12px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .back-link {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .back-link a {
+      text-decoration: none;
+      color: #007bff;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>  
+  <form id="absence-form">
+    <label for="weekday">曜日</label>
+    <select id="weekday" name="weekday" required>
+      <option value="">選択してください</option>
+      <option>月曜日</option>
+      <option>火曜日</option>
+      <option>水曜日</option>
+      <option>木曜日</option>
+      <option>金曜日</option>
+      <option>土曜日</option>
+    </select>
+
+    <label for="period">時間</label>
+    <select id="period" name="period" required>
+      <option value="">選択してください</option>
+      <option>1限</option>
+      <option>2限</option>
+      <option>3限</option>
+      <option>4限</option>
+      <option>5限</option>
+      <option>6限</option>
+    </select>
+
+    <label for="subject">科目名</label>
+    <input type="text" id="subject" name="subject" readonly placeholder="科目名が表示されます">
+
+    <button type="submit" id="submitBtn" disabled>欠席を1回追加</button>
+    <button type="button" id="absentAllBtn" style="margin-top:10px;" disabled>すべて欠席</button>
+  </form>
+
+  <div class="back-link">
+    <a href="timetable.html">← 時間割に戻る</a>
+  </div>
+
+  <script>
+    const weekdaySelect = document.getElementById("weekday");
+    const periodSelect = document.getElementById("period");
+    const subjectInput = document.getElementById("subject");
+    const form = document.getElementById("absence-form");
+    const submitBtn = document.getElementById("submitBtn");
+    const absentAllBtn = document.getElementById("absentAllBtn");
+
+    let timetable = JSON.parse(localStorage.getItem("student_timetable") || "[]");
+
+    function updateSubjectDisplay() {
+      const weekday = weekdaySelect.value;
+      const period = periodSelect.value;
+
+      if (!weekday || !period) {
+        subjectInput.value = "";
+        submitBtn.disabled = true;
+        return;
+      }
+
+      const entry = timetable.find(e => e.weekday === weekday && e.period === period);
+      if (entry) {
+        subjectInput.value = entry.subject;
+        submitBtn.disabled = false;
+      } else {
+        subjectInput.value = "登録されていません";
+        submitBtn.disabled = true;
+      }
+    }
+
+    // 曜日選択時に「すべて欠席」ボタンの状態を変更
+    function updateAbsentAllBtn() {
+      if (weekdaySelect.value) {
+        absentAllBtn.disabled = false;
+      } else {
+        absentAllBtn.disabled = true;
+      }
+    }
+
+    weekdaySelect.addEventListener("change", () => {
+      updateSubjectDisplay();
+      updateAbsentAllBtn();
+    });
+
+    // 初期状態でもボタンを更新
+    updateAbsentAllBtn();
+
+    periodSelect.addEventListener("change", updateSubjectDisplay);
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const weekday = weekdaySelect.value;
+      const period = periodSelect.value;
+
+      const index = timetable.findIndex(e => e.weekday === weekday && e.period === period);
+      if (index !== -1) {
+        timetable[index].absent = (timetable[index].absent || 0) + 1;
+        localStorage.setItem("student_timetable", JSON.stringify(timetable));
+        alert("欠席を1回追加しました");
+      }
+
+      // フォームを初期状態に戻す
+      form.reset();
+      subjectInput.value = "";
+      submitBtn.disabled = true;
+    });
+
+    // すべて欠席ボタンの処理
+    absentAllBtn.addEventListener("click", () => {
+      const weekday = weekdaySelect.value;
+      if (!weekday) {
+        alert("曜日を選択してください");
+        return;
+      }
+      let updated = false;
+      timetable.forEach(e => {
+        if (e.weekday === weekday) {
+          e.absent = (e.absent || 0) + 1;
+          updated = true;
+        }
+      });
+      if (updated) {
+        localStorage.setItem("student_timetable", JSON.stringify(timetable));
+        alert(`${weekday}の科目すべてに欠席を1回追加しました`);
+      } else {
+        alert("該当する科目がありません");
+      }
+      // フォームを初期状態に戻す
+      form.reset();
+      subjectInput.value = "";
+      submitBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>

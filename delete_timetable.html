@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>科目削除</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f8f8f8;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-top: 20px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 30px;
+      width: 100%;
+      padding: 12px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #bb2d3b;
+    }
+
+    .subject-display {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #333;
+      font-weight: bold;
+      min-height: 24px;
+    }
+
+    .back-link {
+      display: block;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .back-link a {
+      text-decoration: none;
+      color: #007bff;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>科目削除</h1>
+
+  <form id="delete-form">
+    <label for="weekday">曜日</label>
+    <select id="weekday" name="weekday" required>
+      <option value="">選択してください</option>
+      <option value="月曜日">月曜日</option>
+      <option value="火曜日">火曜日</option>
+      <option value="水曜日">水曜日</option>
+      <option value="木曜日">木曜日</option>
+      <option value="金曜日">金曜日</option>
+      <option value="土曜日">土曜日</option>
+    </select>
+
+    <label for="period">時間</label>
+    <select id="period" name="period" required>
+      <option value="">選択してください</option>
+      <option value="1限">1限</option>
+      <option value="2限">2限</option>
+      <option value="3限">3限</option>
+      <option value="4限">4限</option>
+      <option value="5限">5限</option>
+      <option value="6限">6限</option>
+    </select>
+
+    <div class="subject-display" id="subject-name">科目名: －</div>
+
+    <button type="submit">削除</button>
+  </form>
+
+  <div class="back-link">
+    <a href="timetable.html">← 時間割に戻る</a>
+  </div>
+
+  <script>
+    const weekdaySelect = document.getElementById("weekday");
+    const periodSelect = document.getElementById("period");
+    const subjectDisplay = document.getElementById("subject-name");
+
+    function updateSubjectName() {
+      const weekday = weekdaySelect.value;
+      const period = periodSelect.value;
+      if (!weekday || !period) {
+        subjectDisplay.textContent = "科目名: －";
+        return;
+      }
+
+      const timetableData = JSON.parse(localStorage.getItem("student_timetable") || "[]");
+      const found = timetableData.find(item => item.weekday === weekday && item.period === period);
+      if (found) {
+        subjectDisplay.textContent = `科目名: ${found.subject}`;
+      } else {
+        subjectDisplay.textContent = "科目名: 登録されていません";
+      }
+    }
+
+    weekdaySelect.addEventListener("change", updateSubjectName);
+    periodSelect.addEventListener("change", updateSubjectName);
+
+    document.getElementById("delete-form").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const weekday = weekdaySelect.value;
+      const period = periodSelect.value;
+
+      if (!weekday || !period) {
+        alert("曜日と時間を選択してください。");
+        return;
+      }
+
+      let timetableData = JSON.parse(localStorage.getItem("student_timetable") || "[]");
+
+      const beforeCount = timetableData.length;
+
+      timetableData = timetableData.filter(item => !(item.weekday === weekday && item.period === period));
+
+      if (timetableData.length === beforeCount) {
+        alert("指定の時間割は登録されていません。");
+        return;
+      }
+
+      localStorage.setItem("student_timetable", JSON.stringify(timetableData));
+      alert(`【${weekday} ${period}】の時間割を削除しました。`);
+      this.reset();
+      subjectDisplay.textContent = "科目名: －";
+    });
+  </script>
+</body>
+</html>

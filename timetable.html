@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>時間割表示</title>
+  <!-- Bootstrap CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome CDN（歯車アイコン用） -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #fff;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      padding: 0;
+    }
+    h1 {
+      margin: 24px 0 16px 0;
+      text-align: center;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 0 auto 16px auto;
+      max-width: 100vw;
+      box-sizing: border-box;
+    }
+    th, td {
+      width: 100px;
+      height: 60px;
+      border: 1px solid #aaa;
+      text-align: center;
+      vertical-align: middle;
+    }
+    th {
+      background-color: #ddd;
+    }
+    td {
+      background-color: #fff;
+      cursor: pointer;
+      white-space: pre-line;
+    }
+    .period-label {
+      background-color: #eee;
+    }
+    .back-link {
+      margin-top: 30px;
+    }
+    .back-link a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+    .navbar {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- ナビゲーションバー追加 -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">欠席管理サイト</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="ナビゲーションの切り替え">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" href="stats.html">統計</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="form.html">フォーム</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="settings_list.html" title="設定">
+              <i class="fas fa-cog"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <h1>時間割表</h1>
+
+  <table id="timetable">
+    <thead>
+      <tr>
+        <th></th>
+        <th>月</th>
+        <th>火</th>
+        <th>水</th>
+        <th>木</th>
+        <th>金</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- JavaScriptで行を挿入 -->
+    </tbody>
+  </table>
+
+  <!-- 「📊 統計・可視化を見る」リンクを削除 -->
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const tbody = document.querySelector("#timetable tbody");
+    const weekdays = ["月", "火", "水", "木", "金"];
+    const periods = ["1", "2", "3", "4", "5", "6"];
+
+    // 時間割の行を作成
+    for (let i = 0; i < periods.length; i++) {
+      const row = document.createElement("tr");
+
+      const periodCell = document.createElement("td");
+      periodCell.className = "period-label";
+      periodCell.textContent = periods[i];
+      row.appendChild(periodCell);
+
+      for (let j = 0; j < weekdays.length; j++) {
+        const cell = document.createElement("td");
+        cell.id = `cell-${weekdays[j]}-${periods[i]}`;
+        row.appendChild(cell);
+      }
+
+      tbody.appendChild(row);
+    }
+
+    // 保存された時間割を読み込む
+    const saved = JSON.parse(localStorage.getItem("student_timetable") || "[]");
+
+    saved.forEach(item => {
+      const weekdayShort = item.weekday.replace("曜日", ""); // 例：月曜日 → 月
+      const periodNum = item.period.replace("限", "");       // 例：1限 → 1
+      const cell = document.getElementById(`cell-${weekdayShort}-${periodNum}`);
+
+      if (cell) {
+        const absenceCount = item.absent ?? item.absence ?? 0;
+        const absenceLimit = 4; // 上限回数
+
+        // 欠席回数によるセル装飾
+        if (absenceCount >= absenceLimit + 1) {
+          cell.style.backgroundColor = '#bdbdbd'; // グレー
+          cell.style.color = '#fff';
+          cell.style.textDecoration = 'line-through';
+          cell.textContent = `${item.subject}\n(欠席: ${absenceCount}/${absenceLimit}回)`;
+        } else {
+          cell.textContent = `${item.subject}\n(欠席: ${absenceCount}/${absenceLimit}回)`;
+          cell.style.textDecoration = 'none';
+          if (absenceCount === absenceLimit) {
+            cell.style.backgroundColor = '#ff6666'; // 赤
+            cell.style.color = '#fff';
+          } else if (absenceCount === absenceLimit - 1) {
+            cell.style.backgroundColor = '#fff176'; // 黄色
+            cell.style.color = '#000';
+          } else {
+            cell.style.backgroundColor = '#fff'; // 通常
+            cell.style.color = '#000';
+          }
+        }
+
+        cell.addEventListener("click", () => {
+          alert(`${item.subject} の欠席回数: ${absenceCount} 回`);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

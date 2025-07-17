@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>欠席回数調整</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f8f8f8;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-top: 20px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 30px;
+      width: 100%;
+      padding: 12px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #222;
+      transform: none;
+      font-size: 16px;
+      font-weight: normal;
+      box-shadow: none;
+      border-radius: 8px;
+    }
+
+    .back-link {
+      display: block;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .back-link a {
+      text-decoration: none;
+      color: #007bff;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>欠席回数調整</h1>
+
+  <form id="adjustForm">
+    <label for="weekday">曜日</label>
+    <select id="weekday" name="weekday">
+      <option>月曜日</option>
+      <option>火曜日</option>
+      <option>水曜日</option>
+      <option>木曜日</option>
+      <option>金曜日</option>
+    </select>
+
+    <label for="period">時間</label>
+    <select id="period" name="period">
+      <option>1限</option>
+      <option>2限</option>
+      <option>3限</option>
+      <option>4限</option>
+      <option>5限</option>
+      <option>6限</option>
+    </select>
+
+    <label for="subject">科目名</label>
+    <input type="text" id="subject" name="subject" disabled placeholder="科目がここに表示されます">
+
+    <label for="absence">欠席回数</label>
+    <select id="absence" name="absence">
+      <option value="0">0回</option>
+      <option value="1">1回</option>
+      <option value="2">2回</option>
+      <option value="3">3回</option>
+      <option value="4">4回</option>
+      <option value="5">5回</option>
+      <option value="6">6回</option>
+      <option value="7">7回</option>
+      <option value="8">8回</option>
+      <option value="9">9回</option>
+      <option value="10">10回</option>
+      <option value="11">11回</option>
+      <option value="12">12回</option>
+      <option value="13">13回</option>
+      <option value="14">14回</option>
+    </select>
+
+    <button type="submit">保存する</button>
+  </form>
+
+  <div class="back-link">
+    <a href="timetable.html">← 時間割に戻る</a>
+  </div>
+
+  <script>
+    const weekdayEl = document.getElementById('weekday');
+    const periodEl = document.getElementById('period');
+    const subjectEl = document.getElementById('subject');
+    const absenceEl = document.getElementById('absence');
+    const form = document.getElementById('adjustForm');
+
+    const loadSubject = () => {
+      const weekday = weekdayEl.value;
+      const period = periodEl.value;
+      const timetable = JSON.parse(localStorage.getItem('student_timetable') || '[]');
+
+      const found = timetable.find(item => item.weekday === weekday && item.period === period);
+
+      if (found) {
+        subjectEl.value = found.subject;
+        absenceEl.value = found.absent ?? 0;
+      } else {
+        subjectEl.value = "登録されていません";
+        absenceEl.value = 0;
+      }
+    };
+
+    weekdayEl.addEventListener('change', loadSubject);
+    periodEl.addEventListener('change', loadSubject);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const weekday = weekdayEl.value;
+      const period = periodEl.value;
+      const newAbsence = parseInt(absenceEl.value, 10);
+
+      const timetable = JSON.parse(localStorage.getItem('student_timetable') || '[]');
+      const index = timetable.findIndex(item => item.weekday === weekday && item.period === period);
+
+      if (index !== -1) {
+        timetable[index].absent = newAbsence;
+        localStorage.setItem('student_timetable', JSON.stringify(timetable));
+        alert('欠席回数を更新しました');
+      } else {
+        alert('時間割が見つかりませんでした');
+      }
+    });
+
+    // 初期読み込み
+    window.addEventListener('DOMContentLoaded', loadSubject);
+  </script>
+</body>
+</html>

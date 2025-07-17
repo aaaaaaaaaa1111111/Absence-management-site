@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>欠席統計</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+    .chart-container {
+      width: 80%;
+      margin: 30px auto;
+      background: #fafafa;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px #eee;
+      padding: 20px;
+    }
+    .back-link {
+      margin-top: 30px;
+    }
+    .back-link a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>欠席統計・可視化</h1>
+
+  <div class="chart-container">
+    <h2>曜日ごとの欠席回数</h2>
+    <canvas id="weekdayChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>科目ごとの欠席回数</h2>
+    <div style="height: 300px;">
+      <canvas id="subjectChart"></canvas>
+    </div>
+  </div>
+
+  <div class="back-link">
+    <a href="timetable.html">← 時間割に戻る</a>
+  </div>
+
+  <script>
+    // 欠席データ取得
+    const saved = JSON.parse(localStorage.getItem("student_timetable") || "[]");
+
+    // 曜日ごとの欠席回数集計
+    const weekdays = ["月", "火", "水", "木", "金"];
+    const weekdayAbsence = { "月": 0, "火": 0, "水": 0, "木": 0, "金": 0 };
+    saved.forEach(item => {
+      const weekdayShort = item.weekday.replace("曜日", "");
+      const absenceCount = item.absent ?? item.absence ?? 0;
+      if (weekdayAbsence[weekdayShort] !== undefined) {
+        weekdayAbsence[weekdayShort] += absenceCount;
+      }
+    });
+
+    // 科目ごとの欠席回数集計
+    const subjectAbsence = {};
+    saved.forEach(item => {
+      const subject = item.subject;
+      const absenceCount = item.absent ?? item.absence ?? 0;
+      if (!subjectAbsence[subject]) subjectAbsence[subject] = 0;
+      subjectAbsence[subject] += absenceCount;
+    });
+
+    // 曜日グラフ
+    const ctxWeekday = document.getElementById('weekdayChart').getContext('2d');
+    new Chart(ctxWeekday, {
+      type: 'bar',
+      data: {
+        labels: weekdays,
+        datasets: [{
+          label: '欠席回数',
+          data: weekdays.map(w => weekdayAbsence[w]),
+          backgroundColor: '#42a5f5',
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: { beginAtZero: true, stepSize: 1 }
+        }
+      }
+    });
+
+    // 科目グラフ
+    const ctxSubject = document.getElementById('subjectChart').getContext('2d');
+    new Chart(ctxSubject, {
+      type: 'pie',
+      data: {
+        labels: Object.keys(subjectAbsence),
+        datasets: [{
+          label: '欠席回数',
+          data: Object.values(subjectAbsence),
+          backgroundColor: [
+            '#42a5f5', '#66bb6a', '#ffa726', '#ab47bc', '#ef5350', '#26a69a', '#d4e157', '#8d6e63', '#789262', '#ffb300'
+          ],
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+        }
+      }
+    });
+  </script>
+</body>
+</html>
